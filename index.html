@@ -247,6 +247,20 @@ body{
 .proposal-name{ font-weight:700; font-size:1.05rem; color:var(--wax-dark); }
 .proposal-slot{ font-size:.9rem; color:var(--muted); }
 
+/* ---- Message taquin (tentatives de "Non") ---- */
+.tease{
+  min-height:1.2em;            /* réserve la place : pas de saut de layout */
+  margin:12px 2px 0;
+  font-size:.85rem; font-style:italic;
+  color:var(--muted);
+  opacity:0;                    /* vide au départ */
+}
+.tease.show{ animation:teasePop .45s var(--ease); opacity:1; }
+@keyframes teasePop{
+  from{ opacity:0; transform:translateY(4px); }
+  to{ opacity:1; transform:none; }
+}
+
 /* ---- Boutons ---- */
 .actions{
   position:relative;      /* conteneur du bouton "Non" fuyard */
@@ -389,6 +403,8 @@ body{
         <button class="btn btn-yes" id="btnYes" type="button">Oui</button>
         <button class="btn btn-no" id="btnNo" type="button">Non</button>
       </div>
+      <!-- message taquin qui apparaît quand elle tente le "Non" -->
+      <p class="tease" id="tease" aria-live="polite"></p>
     </div>
 
     <!-- Confirmation (rempli dynamiquement) -->
@@ -414,6 +430,16 @@ body{
    CONSTANTES ÉDITABLES
    ============================================================ */
 const CONFIRM_TITLE = "Alors c'est un oui 🥹"; // titre après "Oui" (éditable)
+
+// Petits messages taquins affichés quand elle tente le "Non" (édite/ajoute librement).
+// Ils défilent dans l'ordre puis reviennent au début.
+const TEASE_MESSAGES = [
+  "Dommage, tu peux réessayer 😏",
+  "Trop lent…",
+  "Presque !",
+  "Nan nan nan 🙈",
+  "Le « oui » est juste là 💚",
+];
 
 // ▼ Extrait de musique à jouer en boucle (en secondes).
 //   Ex: passage de 0:45 à 1:15 → START=45, END=75.
@@ -485,8 +511,21 @@ const btnYes = document.getElementById('btnYes');
    ============================================================ */
 const btnNo   = document.getElementById('btnNo');
 const actions = document.getElementById('actions');
+const tease   = document.getElementById('tease');
 let noScale = 1;                      // facteur de rétrécissement cumulé
+let teaseIdx = 0;                     // index du prochain message taquin
 const MIN_SCALE = 0.55;               // ne rétrécit pas à l'infini
+
+// Affiche le message taquin suivant (défile puis reboucle)
+function showTease(){
+  if(!TEASE_MESSAGES.length) return;
+  tease.textContent = TEASE_MESSAGES[teaseIdx % TEASE_MESSAGES.length];
+  teaseIdx++;
+  // relance l'animation d'apparition
+  tease.classList.remove('show');
+  void tease.offsetWidth;            // force un reflow pour rejouer l'anim
+  tease.classList.add('show');
+}
 
 function fleeNo(){
   // rétrécit légèrement (borné)
@@ -508,6 +547,8 @@ function fleeNo(){
   btnNo.style.left = left + 'px';
   btnNo.style.top  = top + 'px';
   btnNo.style.transform = `scale(${noScale})`; // translate retiré : left/top gèrent la position
+
+  showTease();                        // petit message taquin à chaque tentative
 }
 
 // Desktop : fuit à l'approche du curseur + au clic

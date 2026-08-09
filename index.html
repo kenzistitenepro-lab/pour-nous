@@ -545,8 +545,7 @@ const QUESTION_TEXT = "Veux-tu être la dernière personne que je vais dater… 
 const SCATTER_PHOTOS = [
   "assets/photo01.jpg", "assets/photo02.jpg", "assets/photo03.jpg",
   "assets/photo04.jpg", "assets/photo05.jpg", "assets/photo06.jpg",
-  "assets/photo07.jpg", "assets/photo08.jpg", "assets/photo09.jpg",
-  "assets/photo10.jpg",
+  "assets/photo07.jpg", "assets/photo08.jpg", "assets/photo10.jpg",
 ];
 
 // Petits messages taquins affichés quand elle tente le "Non" (édite/ajoute librement).
@@ -746,7 +745,8 @@ function buildScatter(){
   if(scatterBuilt || !SCATTER_PHOTOS.length) return;
   scatterBuilt = true;
   const mobile = innerWidth < 640;                         // dispo dédiée mobile
-  const slots  = mobile ? MOBILE_SLOTS : SCATTER_SLOTS;
+  const allSlots = mobile ? MOBILE_SLOTS : SCATTER_SLOTS;
+  const slots  = allSlots.slice(0, SCATTER_PHOTOS.length); // autant d'emplacements que de photos
   const w      = mobile ? 'clamp(52px, 18vw, 84px)' : 'clamp(58px, 16vw, 106px)';
   slots.forEach((slot, i) => {
     const pola = document.createElement('div');

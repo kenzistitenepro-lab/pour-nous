@@ -414,8 +414,8 @@ const CONFIRM_TITLE = "[Message de confirmation]"; // titre après "Oui"
 //   Ex: passage de 0:45 à 1:15 → START=45, END=75.
 //   Astuce: le plus léger est de couper directement le mp3 sur ce passage ;
 //   ces constantes servent si tu déposes le morceau entier.
-const MUSIC_START = 0;    // début de l'extrait (s)
-const MUSIC_END   = 30;   // fin de l'extrait (s) — reboucle ensuite (0 = joue tout)
+const MUSIC_START = 0;    // début de lecture (s)
+const MUSIC_END   = 0;    // 0 = joue le morceau entier en boucle (pas d'extrait)
 
 // L'activité et le créneau affichés dans la confirmation sont lus depuis la
 // proposition unique (#propName / #propSlot) — un seul endroit à éditer.

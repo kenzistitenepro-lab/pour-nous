@@ -318,6 +318,39 @@ body{
 }
 .hidden{ display:none !important; }
 
+/* ---- Bouton "Ajouter au calendrier" (sobre, secondaire) ---- */
+.btn-cal{
+  margin-top:18px;
+  font:inherit; font-weight:600; font-size:.85rem;
+  color:var(--paper-ink);
+  background:transparent;
+  border:1px solid var(--muted);
+  border-radius:999px;
+  padding:9px 18px; cursor:pointer;
+  transition:background .2s, color .2s, transform .18s var(--ease);
+}
+.btn-cal:hover{ background:var(--wax); color:var(--paper); border-color:var(--wax); transform:translateY(-1px); }
+
+/* ============================================================
+   RÉVÉLATION EN CASCADE — chaque élément apparaît en fondu + translateY,
+   décalé via --d (transition-delay). Déclenché par .letter.revealed
+   ============================================================ */
+.reveal{
+  opacity:0;
+  transform:translateY(12px);
+  transition:opacity .55s var(--ease), transform .55s var(--ease);
+  transition-delay:var(--d, 0ms);
+}
+.letter.revealed .reveal{ opacity:1; transform:none; }
+
+/* ---- Particules de fond (poussière) — derrière le contenu ---- */
+#bg{
+  position:fixed; inset:0;
+  width:100%; height:100%;
+  z-index:0; pointer-events:none;
+}
+.stage{ position:relative; z-index:1; }   /* passe l'enveloppe au-dessus des particules */
+
 /* Canvas confetti par-dessus tout */
 #confetti{
   position:fixed; inset:0; pointer-events:none; z-index:40;
@@ -338,10 +371,15 @@ body{
    ============================================================ */
 @media (prefers-reduced-motion:reduce){
   *{ transition:none !important; animation:none !important; }
+  /* pas de cascade : tout est visible d'emblée, sans délai */
+  .reveal{ opacity:1 !important; transform:none !important; }
 }
 </style>
 </head>
 <body>
+
+<!-- Particules de fond (poussière en suspension) — derrière tout le contenu -->
+<canvas id="bg" aria-hidden="true"></canvas>
 
 <!-- ============ ÉCRAN 1 : enveloppe ============ -->
 <main class="stage">
@@ -362,11 +400,12 @@ body{
     <!-- Contenu principal (masqué après validation) -->
     <div id="letterMain">
       <!-- ▼▼ PLACEHOLDERS — édite librement ▼▼ -->
-      <h1 class="greeting">Bonjour Yasmine,</h1>
-      <p class="sub">Pour toi, pour nous</p>
+      <!-- class "reveal" + --d = apparition en cascade (voir CSS/JS) -->
+      <h1 class="greeting reveal" style="--d:0ms">Bonjour Yasmine,</h1>
+      <p class="sub reveal" style="--d:100ms">Pour toi, pour nous</p>
 
       <!-- Portraits — si la photo manque, l'initiale (data-initial) s'affiche -->
-      <div class="portraits">
+      <div class="portraits reveal" style="--d:200ms">
         <figure class="portrait">
           <span class="avatar" data-initial="Y">
             <img src="assets/photo%20yasmine.jpg" alt="Yasmine" onerror="this.remove()">
@@ -381,7 +420,7 @@ body{
         </figure>
       </div>
 
-      <p class="message">
+      <p class="message reveal" style="--d:300ms">
         Je te propose un moment, rien que pour nous deux. Terrasse, la mer,
         coucher de soleil… et pas grand-chose d'autre à faire que d'y être
         et de te faire belle 😍
@@ -390,16 +429,16 @@ body{
         jusqu'à qu'on arrive. Une chose est sûre : ça va te plaire.
       </p>
 
-      <!-- Proposition UNIQUE (plus de sélection) — édite ici l'activité + le créneau -->
-      <p class="section-label">Notre moment</p>
-      <div class="proposal">
-        <span class="proposal-name" id="propName">Terrasse, vue sur la mer</span>
-        <span class="proposal-slot">Lieu : secret 🤫</span>
-        <span class="proposal-slot" id="propSlot">12 août, vers 19h</span>
+      <!-- Proposition UNIQUE — textes remplis depuis les constantes EVENT_* (JS) -->
+      <p class="section-label reveal" style="--d:400ms">Notre moment</p>
+      <div class="proposal reveal" style="--d:500ms">
+        <span class="proposal-name" id="propName"></span>
+        <span class="proposal-slot" id="propLieu"></span>
+        <span class="proposal-slot" id="propSlot"></span>
       </div>
       <!-- ▲▲ FIN PLACEHOLDERS ▲▲ -->
 
-      <div class="actions" id="actions">
+      <div class="actions reveal" id="actions" style="--d:600ms">
         <button class="btn btn-yes" id="btnYes" type="button">Oui</button>
         <button class="btn btn-no" id="btnNo" type="button">Non</button>
       </div>
@@ -413,6 +452,8 @@ body{
       <p>On se voit pour <span class="pick" id="pickName">…</span></p>
       <p><span class="pick" id="pickSlot">…</span></p>
       <p class="sub" style="margin-top:14px">J'ai hâte…</p>
+      <!-- Génère + télécharge un .ics (date/heure depuis les constantes EVENT_*) -->
+      <button class="btn-cal" id="btnCal" type="button">📅 Ajouter au calendrier</button>
     </div>
 
   </article>
@@ -448,8 +489,14 @@ const TEASE_MESSAGES = [
 const MUSIC_START = 0;    // début de lecture (s)
 const MUSIC_END   = 0;    // 0 = joue le morceau entier en boucle (pas d'extrait)
 
-// L'activité et le créneau affichés dans la confirmation sont lus depuis la
-// proposition unique (#propName / #propSlot) — un seul endroit à éditer.
+// ▼ ÉVÉNEMENT — UN SEUL endroit à éditer : pilote l'affichage ET le fichier .ics.
+const EVENT_TITLE        = "Terrasse, vue sur la mer"; // activité (affichée + .ics)
+const EVENT_LOCATION     = "Lieu : secret 🤫";         // ligne lieu (affichée)
+const EVENT_WHEN_TEXT    = "12 août, vers 19h";        // créneau affiché (texte libre)
+const EVENT_DATE         = "2026-08-12";               // .ics — date AAAA-MM-JJ
+const EVENT_TIME         = "19:00";                    // .ics — heure HH:MM (locale)
+const EVENT_DURATION_MIN = 120;                        // .ics — durée en minutes
+const EVENT_ICS_LOCATION = "";                         // .ics — lieu (vide = secret)
 
 /* ============================================================
    1. OUVERTURE DE L'ENVELOPPE
@@ -457,12 +504,22 @@ const MUSIC_END   = 0;    // 0 = joue le morceau entier en boucle (pas d'extrait
 const envelope    = document.getElementById('envelope');
 const envScreen   = document.getElementById('envScreen');
 const overlay     = document.getElementById('letterOverlay');
+const letterEl    = document.querySelector('.letter');
+
+// Remplit la proposition depuis les constantes EVENT_* (source unique)
+document.getElementById('propName').textContent = EVENT_TITLE;
+document.getElementById('propLieu').textContent = EVENT_LOCATION;
+document.getElementById('propSlot').textContent = EVENT_WHEN_TEXT;
 
 function openEnvelope(){
   envelope.classList.add('is-open');
   startMusic();                          // le clic = geste utilisateur → autoplay autorisé
-  // laisse jouer l'anim du rabat, puis affiche la lettre
-  setTimeout(()=> overlay.classList.add('is-visible'), 420);
+  // laisse jouer l'anim du rabat, puis affiche la lettre + lance la cascade
+  setTimeout(()=>{
+    overlay.classList.add('is-visible');
+    // rAF : garantit que l'état initial (.reveal) est peint avant d'animer
+    requestAnimationFrame(()=> letterEl.classList.add('revealed'));
+  }, 420);
 }
 envelope.addEventListener('click', openEnvelope);
 
@@ -629,6 +686,101 @@ function launchConfetti(){
     else ctx.clearRect(0,0,innerWidth,innerHeight);
   })();
 }
+
+/* ============================================================
+   6. "AJOUTER AU CALENDRIER" — génère un .ics en JS pur (Blob)
+   Date/heure lues depuis les constantes EVENT_* (un seul endroit).
+   ============================================================ */
+const btnCal = document.getElementById('btnCal');
+
+const pad2 = n => String(n).padStart(2, '0');
+// échappe les caractères spéciaux ICS (RFC 5545)
+const icsEscape = s => String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;')
+                                .replace(/,/g,'\\,').replace(/\n/g,'\\n');
+// format "heure locale flottante" AAAAMMJJTHHMMSS (pas de fuseau : simple et suffisant)
+const icsLocal = dt => `${dt.getFullYear()}${pad2(dt.getMonth()+1)}${pad2(dt.getDate())}`+
+                       `T${pad2(dt.getHours())}${pad2(dt.getMinutes())}00`;
+// horodatage UTC pour DTSTAMP
+const icsStampUTC = dt => `${dt.getUTCFullYear()}${pad2(dt.getUTCMonth()+1)}${pad2(dt.getUTCDate())}`+
+                          `T${pad2(dt.getUTCHours())}${pad2(dt.getUTCMinutes())}${pad2(dt.getUTCSeconds())}Z`;
+
+function buildICS(){
+  const [y, mo, d] = EVENT_DATE.split('-').map(Number);
+  const [h, mi]    = EVENT_TIME.split(':').map(Number);
+  const start = new Date(y, mo - 1, d, h, mi);
+  const end   = new Date(start.getTime() + EVENT_DURATION_MIN * 60000);
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//pour-nous//invitation//FR',
+    'CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    'UID:evt-' + start.getTime() + '@pour-nous',
+    'DTSTAMP:' + icsStampUTC(new Date()),
+    'DTSTART:' + icsLocal(start),
+    'DTEND:'   + icsLocal(end),
+    'SUMMARY:' + icsEscape(EVENT_TITLE),
+    EVENT_ICS_LOCATION ? 'LOCATION:' + icsEscape(EVENT_ICS_LOCATION) : '',
+    'DESCRIPTION:' + icsEscape('Notre moment ✨'),
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].filter(Boolean);
+  return lines.join('\r\n');   // ICS exige des retours CRLF
+}
+
+btnCal.addEventListener('click', () => {
+  const blob = new Blob([buildICS()], { type: 'text/calendar;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'invitation.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+/* ============================================================
+   7. PARTICULES DE FOND — poussière en suspension (avant ouverture)
+   ~18 particules, dérive lente + continue, très faible opacité.
+   Désactivé si prefers-reduced-motion.
+   ============================================================ */
+(function initBackground(){
+  if(reduceMotion) return;               // pas d'animation si mouvement réduit
+  const bg  = document.getElementById('bg');
+  const bx  = bg.getContext('2d');
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+
+  function resize(){
+    bg.width  = innerWidth  * dpr;
+    bg.height = innerHeight * dpr;
+    bx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  const N = 18;                           // peu de particules = performant
+  const parts = Array.from({length:N}, () => ({
+    x: Math.random() * innerWidth,
+    y: Math.random() * innerHeight,
+    r: Math.random() * 1.6 + 0.6,         // petit point fin
+    vx: (Math.random() - 0.5) * 0.14,     // dérive lente et aléatoire
+    vy: (Math.random() - 0.5) * 0.14,
+    a: Math.random() * 0.06 + 0.03        // opacité faible (0.03–0.09)
+  }));
+
+  (function drift(){
+    bx.clearRect(0, 0, innerWidth, innerHeight);
+    for(const p of parts){
+      p.x += p.vx; p.y += p.vy;
+      // ré-enroule doucement aux bords (dérive continue, jamais de saut visible)
+      if(p.x < -5) p.x = innerWidth + 5;  else if(p.x > innerWidth + 5)  p.x = -5;
+      if(p.y < -5) p.y = innerHeight + 5; else if(p.y > innerHeight + 5) p.y = -5;
+      bx.beginPath();
+      bx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      bx.fillStyle = `rgba(255,255,255,${p.a})`;
+      bx.fill();
+    }
+    requestAnimationFrame(drift);
+  })();
+})();
 </script>
 </body>
 </html>

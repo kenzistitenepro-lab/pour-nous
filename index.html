@@ -543,10 +543,10 @@ const QUESTION_TEXT = "Veux-tu être la dernière personne que je vais dater… 
 //   Ajoute/enlève des chemins librement. Mets les fichiers dans assets/.
 //   Si le nom contient des espaces, remplace-les par %20 (ex: "assets/mon%20image.jpg").
 const SCATTER_PHOTOS = [
-  "assets/photo%20yasmine.jpg",
-  "assets/photo%20kenzi.jpg",
-  // "assets/autre1.jpg",
-  // "assets/autre2.jpg",
+  "assets/photo01.jpg", "assets/photo02.jpg", "assets/photo03.jpg",
+  "assets/photo04.jpg", "assets/photo05.jpg", "assets/photo06.jpg",
+  "assets/photo07.jpg", "assets/photo08.jpg", "assets/photo09.jpg",
+  "assets/photo10.jpg",
 ];
 
 // Petits messages taquins affichés quand elle tente le "Non" (édite/ajoute librement).
@@ -715,12 +715,16 @@ let scatterBuilt = false;
 // Emplacements des polaroïds autour de la carte (le centre reste lisible).
 // left/right en % ; rot = inclinaison.
 const SCATTER_SLOTS = [
-  { top:'5%',  left:'3%',  rot:'-8deg' },
-  { top:'8%',  right:'4%', rot:'7deg'  },
-  { top:'38%', left:'1%',  rot:'6deg'  },
-  { top:'42%', right:'2%', rot:'-7deg' },
-  { top:'72%', left:'6%',  rot:'-5deg' },
-  { top:'70%', right:'5%', rot:'8deg'  },
+  { top:'3%',  left:'2%',   rot:'-8deg' },
+  { top:'2%',  left:'34%',  rot:'4deg'  },
+  { top:'4%',  right:'3%',  rot:'7deg'  },
+  { top:'34%', left:'0%',   rot:'6deg'  },
+  { top:'37%', right:'0%',  rot:'-7deg' },
+  { top:'63%', left:'1%',   rot:'-5deg' },
+  { top:'66%', right:'1%',  rot:'8deg'  },
+  { top:'85%', left:'6%',   rot:'6deg'  },
+  { top:'86%', left:'36%',  rot:'-4deg' },
+  { top:'84%', right:'5%',  rot:'-8deg' },
 ];
 
 function buildScatter(){
@@ -733,7 +737,7 @@ function buildScatter(){
     if(slot.left)  pola.style.left  = slot.left;
     if(slot.right) pola.style.right = slot.right;
     pola.style.setProperty('--rot', slot.rot);
-    pola.style.setProperty('--w', 'clamp(66px, 20vw, 120px)');
+    pola.style.setProperty('--w', 'clamp(58px, 16vw, 106px)');
     pola.style.setProperty('--d', (i * 90) + 'ms'); // apparition décalée
     const img = document.createElement('img');
     img.src = SCATTER_PHOTOS[i % SCATTER_PHOTOS.length]; // recycle si peu de photos

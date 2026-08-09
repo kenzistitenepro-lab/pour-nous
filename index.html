@@ -235,48 +235,52 @@ body{
   font-weight:600;
 }
 
-/* ---- Cartes d'activités (radio-like) ---- */
-.cards{
-  display:grid;
-  grid-template-columns:1fr;   /* empilé sur mobile */
-  gap:12px;
+/* ---- Proposition unique (affichée, non sélectionnable) ---- */
+.proposal{
+  display:flex; flex-direction:column; gap:4px;
+  border-left:3px solid var(--wax);      /* accent vert */
+  background:rgba(47,191,113,.10);
+  border-radius:10px;
+  padding:14px 16px;
   margin-bottom:24px;
 }
-.card{
-  text-align:left;
-  border:2px solid rgba(120,90,60,.28);
-  background:rgba(255,255,255,.35);
-  border-radius:12px;
-  padding:14px 15px;
-  cursor:pointer;
-  font:inherit; color:inherit;
-  display:flex; align-items:center; gap:12px;
-  transition:border-color .2s var(--ease), background .2s var(--ease), transform .1s;
-}
-.card:active{ transform:scale(.99); }
-.card .radio{
-  flex:0 0 auto;
-  width:20px; height:20px; border-radius:50%;
-  border:2px solid var(--muted);
-  display:grid; place-items:center;
-  transition:border-color .2s;
-}
-.card .radio::after{
-  content:""; width:10px; height:10px; border-radius:50%;
-  background:var(--wax); transform:scale(0); transition:transform .2s var(--ease);
-}
-.card .body{ display:flex; flex-direction:column; gap:3px; }
-.card .name{ font-weight:600; font-size:1rem; }
-.card .slot{ font-size:.85rem; color:var(--muted); }
+.proposal-name{ font-weight:700; font-size:1.05rem; color:var(--wax-dark); }
+.proposal-slot{ font-size:.9rem; color:var(--muted); }
 
-/* état sélectionné — clair et net */
-.card[aria-checked="true"]{
-  border-color:var(--wax);
-  background:rgba(47,191,113,.14);
+/* ---- Option secondaire discrète (empêchement réel) ---- */
+.objection{ margin-top:18px; }
+.link-btn{
+  border:0; background:none; padding:4px 2px;
+  font:inherit; font-size:.82rem;
+  color:var(--muted);
+  text-decoration:underline; text-underline-offset:3px;
+  cursor:pointer;
+  opacity:.8; transition:opacity .2s, color .2s;
 }
-.card[aria-checked="true"] .radio{ border-color:var(--wax); }
-.card[aria-checked="true"] .radio::after{ transform:scale(1); }
-.card[aria-checked="true"] .name{ color:var(--wax-dark); }
+.link-btn:hover{ opacity:1; color:var(--paper-ink); }
+
+.obj-panel{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
+.obj-panel textarea{
+  font:inherit; font-size:.95rem;
+  color:var(--paper-ink);
+  background:rgba(255,255,255,.55);
+  border:1px solid rgba(14,28,26,.2);
+  border-radius:10px;
+  padding:10px 12px; resize:vertical; min-height:70px;
+}
+.obj-panel textarea:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+/* "Envoyer" volontairement sobre — pas un CTA principal */
+.btn-send{
+  align-self:flex-start;
+  font:inherit; font-weight:600; font-size:.85rem;
+  color:var(--paper-ink);
+  background:transparent;
+  border:1px solid var(--muted);
+  border-radius:999px;
+  padding:8px 18px; cursor:pointer;
+  transition:background .2s, color .2s;
+}
+.btn-send:hover{ background:var(--paper-ink); color:var(--paper); }
 
 /* ---- Boutons ---- */
 .actions{
@@ -403,39 +407,29 @@ body{
         par ce que tu veux vraiment dire. Garde-le court et sincère.]
       </p>
 
-      <p class="section-label">Choisis notre moment</p>
-      <div class="cards" id="cards" role="radiogroup" aria-label="Choix d'activité">
-        <!-- data-name / data-slot = repris dans la confirmation -->
-        <button class="card" role="radio" aria-checked="false"
-                data-name="[Activité 1]" data-slot="[Jour • Heure]">
-          <span class="radio" aria-hidden="true"></span>
-          <span class="body">
-            <span class="name">[Activité 1]</span>
-            <span class="slot">[Jour • Heure]</span>
-          </span>
-        </button>
-        <button class="card" role="radio" aria-checked="false"
-                data-name="[Activité 2]" data-slot="[Jour • Heure]">
-          <span class="radio" aria-hidden="true"></span>
-          <span class="body">
-            <span class="name">[Activité 2]</span>
-            <span class="slot">[Jour • Heure]</span>
-          </span>
-        </button>
-        <button class="card" role="radio" aria-checked="false"
-                data-name="[Activité 3]" data-slot="[Jour • Heure]">
-          <span class="radio" aria-hidden="true"></span>
-          <span class="body">
-            <span class="name">[Activité 3]</span>
-            <span class="slot">[Jour • Heure]</span>
-          </span>
-        </button>
+      <!-- Proposition UNIQUE (plus de sélection) — édite ici l'activité + le créneau -->
+      <p class="section-label">Notre moment</p>
+      <div class="proposal">
+        <span class="proposal-name" id="propName">[Activité]</span>
+        <span class="proposal-slot" id="propSlot">[Jour • Heure]</span>
       </div>
       <!-- ▲▲ FIN PLACEHOLDERS ▲▲ -->
 
       <div class="actions" id="actions">
-        <button class="btn btn-yes" id="btnYes" disabled aria-disabled="true">Oui</button>
+        <button class="btn btn-yes" id="btnYes" type="button">Oui</button>
         <button class="btn btn-no" id="btnNo" type="button">Non</button>
+      </div>
+
+      <!-- Option secondaire DISCRÈTE : un empêchement réel, pas un refus -->
+      <div class="objection">
+        <button class="link-btn" id="objBtn" type="button" aria-expanded="false">
+          Ce créneau ne me va pas
+        </button>
+        <div class="obj-panel hidden" id="objPanel">
+          <textarea id="objText" rows="3"
+            placeholder="[Explique, ou propose un autre moment…]"></textarea>
+          <button class="btn-send" id="objSend" type="button">Envoyer</button>
+        </div>
       </div>
     </div>
 
@@ -462,7 +456,13 @@ body{
    CONSTANTES ÉDITABLES
    ============================================================ */
 const CONFIRM_TITLE = "[Message de confirmation]"; // titre après "Oui"
-// Le nom d'activité et le créneau sont lus depuis les data-* des cartes.
+
+// ▼ Numéro WhatsApp qui reçoit le message de l'option "Ce créneau ne me va pas".
+//   Format international SANS le "+" ni espaces. Ex: France 06 12 34 56 78 → "33612345678".
+const WHATSAPP_NUMBER = "[NUMERO_PLACEHOLDER]";
+
+// L'activité et le créneau affichés dans la confirmation sont lus depuis la
+// proposition unique (#propName / #propSlot) — un seul endroit à éditer.
 
 /* ============================================================
    1. OUVERTURE DE L'ENVELOPPE
@@ -506,30 +506,9 @@ musicBtn.addEventListener('click', () => {
 });
 
 /* ============================================================
-   2. SÉLECTION DES CARTES (logique radio maison)
-   - une seule carte active à la fois (aria-checked)
-   - active/désactive le bouton "Oui"
+   2. (plus de sélection de cartes) — "Oui" est actif dès l'ouverture
    ============================================================ */
-const cards  = Array.from(document.querySelectorAll('.card'));
 const btnYes = document.getElementById('btnYes');
-let selectedCard = null;
-
-function selectCard(card){
-  // décoche toutes les cartes, coche celle cliquée
-  cards.forEach(c => c.setAttribute('aria-checked', c === card ? 'true' : 'false'));
-  selectedCard = card;
-  // "Oui" devient actionnable dès qu'un choix existe
-  btnYes.disabled = false;
-  btnYes.setAttribute('aria-disabled', 'false');
-}
-
-cards.forEach(card => {
-  card.addEventListener('click', () => selectCard(card));
-  // navigation clavier : Entrée / Espace sélectionnent
-  card.addEventListener('keydown', e => {
-    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); selectCard(card); }
-  });
-});
 
 /* ============================================================
    3. BOUTON "NON" FUYARD
@@ -582,17 +561,41 @@ const letterMain = document.getElementById('letterMain');
 const confirm    = document.getElementById('confirm');
 
 btnYes.addEventListener('click', () => {
-  if(btnYes.disabled || !selectedCard) return;
-
-  // reprend le choix réel dans la confirmation
-  document.getElementById('pickName').textContent = selectedCard.dataset.name;
-  document.getElementById('pickSlot').textContent = selectedCard.dataset.slot;
+  // reprend l'activité + le créneau de la proposition unique
+  document.getElementById('pickName').textContent =
+    document.getElementById('propName').textContent;
+  document.getElementById('pickSlot').textContent =
+    document.getElementById('propSlot').textContent;
   confirm.querySelector('h2').textContent = CONFIRM_TITLE;
 
   letterMain.classList.add('hidden');
   confirm.classList.remove('hidden');
 
   launchConfetti();
+});
+
+/* ============================================================
+   4b. OPTION DISCRÈTE "Ce créneau ne me va pas" → WhatsApp
+   - dévoile un textarea + "Envoyer"
+   - "Envoyer" ouvre WhatsApp avec le texte pré-rempli (wa.me)
+   - n'envoie rien tout seul : elle valide dans WhatsApp
+   ============================================================ */
+const objBtn   = document.getElementById('objBtn');
+const objPanel = document.getElementById('objPanel');
+const objText  = document.getElementById('objText');
+const objSend  = document.getElementById('objSend');
+
+objBtn.addEventListener('click', () => {
+  const open = objPanel.classList.toggle('hidden') === false;
+  objBtn.setAttribute('aria-expanded', String(open));
+  if(open) objText.focus();
+});
+
+objSend.addEventListener('click', () => {
+  const msg = objText.value.trim();
+  // encode le texte pour l'URL ; ouvre WhatsApp dans un nouvel onglet
+  const url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
 });
 
 /* ============================================================

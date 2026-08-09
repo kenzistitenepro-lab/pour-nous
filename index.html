@@ -409,6 +409,26 @@ body{
 }
 .letter.revealed .reveal{ opacity:1; transform:none; }
 
+/* Cascade de l'ÉTAPE 2 (déclenchée quand #step2 reçoit .show) */
+.reveal2{
+  opacity:0; transform:translateY(12px);
+  transition:opacity .5s var(--ease), transform .5s var(--ease);
+  transition-delay:var(--d, 0ms);
+}
+#step2.show .reveal2{ opacity:1; transform:none; }
+
+/* Bouton "Suivant" (accent, centré) */
+.next-wrap{ margin-top:6px; }
+.btn-next{
+  font:inherit; font-weight:600; font-size:1rem;
+  color:var(--paper); background:var(--wax);
+  border:0; border-radius:999px;
+  padding:12px 30px; cursor:pointer;
+  box-shadow:0 6px 16px rgba(0,0,0,.2);
+  transition:transform .18s var(--ease), background .2s;
+}
+.btn-next:hover{ transform:translateY(-2px); }
+
 /* ---- Particules de fond (poussière) — derrière le contenu ---- */
 #bg{
   position:fixed; inset:0;
@@ -438,7 +458,7 @@ body{
 @media (prefers-reduced-motion:reduce){
   *{ transition:none !important; animation:none !important; }
   /* pas de cascade : tout est visible d'emblée, sans délai */
-  .reveal{ opacity:1 !important; transform:none !important; }
+  .reveal, .reveal2{ opacity:1 !important; transform:none !important; }
 }
 </style>
 </head>
@@ -477,48 +497,57 @@ body{
     <div id="letterMain">
       <!-- ▼▼ PLACEHOLDERS — édite librement ▼▼ -->
       <!-- class "reveal" + --d = apparition en cascade (voir CSS/JS) -->
-      <h1 class="greeting reveal" style="--d:0ms">Yasmine,</h1>
+      <!-- ÉTAPE 1 : salutation + photos + message + bouton Suivant -->
+      <div id="step1">
+        <h1 class="greeting reveal" style="--d:0ms">Yasmine,</h1>
 
-      <!-- Portraits — si la photo manque, l'initiale (data-initial) s'affiche -->
-      <div class="portraits reveal" style="--d:200ms">
-        <figure class="portrait">
-          <span class="avatar" data-initial="Y">
-            <img src="assets/photo%20yasmine.jpg" alt="Yasmine" onerror="this.remove()">
-          </span>
-          <figcaption>Yasmine</figcaption>
-        </figure>
-        <figure class="portrait">
-          <span class="avatar" data-initial="K">
-            <img src="assets/photo%20kenzi.jpg" alt="Kenzi" onerror="this.remove()">
-          </span>
-          <figcaption>Kenzi</figcaption>
-        </figure>
+        <!-- Portraits — si la photo manque, l'initiale (data-initial) s'affiche -->
+        <div class="portraits reveal" style="--d:150ms">
+          <figure class="portrait">
+            <span class="avatar" data-initial="Y">
+              <img src="assets/photo%20yasmine.jpg" alt="Yasmine" onerror="this.remove()">
+            </span>
+            <figcaption>Yasmine</figcaption>
+          </figure>
+          <figure class="portrait">
+            <span class="avatar" data-initial="K">
+              <img src="assets/photo%20kenzi.jpg" alt="Kenzi" onerror="this.remove()">
+            </span>
+            <figcaption>Kenzi</figcaption>
+          </figure>
+        </div>
+
+        <p class="message reveal" style="--d:300ms">
+          Je te propose un moment, rien que pour nous deux. Terrasse, la mer,
+          coucher de soleil… et pas grand-chose d'autre à faire que d'y être
+          et de te faire belle 😍
+          <br><br>
+          Le lieu, c'est secret, je ne peux pas te dire pour le moment,
+          jusqu'à qu'on arrive. Une chose est sûre : ça va te plaire.
+        </p>
+
+        <div class="next-wrap reveal" style="--d:450ms">
+          <button class="btn-next" id="btnNext" type="button">Suivant →</button>
+        </div>
       </div>
 
-      <p class="message reveal" style="--d:300ms">
-        Je te propose un moment, rien que pour nous deux. Terrasse, la mer,
-        coucher de soleil… et pas grand-chose d'autre à faire que d'y être
-        et de te faire belle 😍
-        <br><br>
-        Le lieu, c'est secret, je ne peux pas te dire pour le moment,
-        jusqu'à qu'on arrive. Une chose est sûre : ça va te plaire.
-      </p>
+      <!-- ÉTAPE 2 : Notre moment + Oui/Non (révélée au clic sur Suivant) -->
+      <div id="step2" class="hidden">
+        <!-- Proposition UNIQUE — textes remplis depuis les constantes EVENT_* (JS) -->
+        <p class="section-label reveal2" style="--d:0ms">Notre moment</p>
+        <div class="proposal reveal2" style="--d:120ms">
+          <span class="proposal-name" id="propName"></span>
+          <span class="proposal-slot" id="propLieu"></span>
+          <span class="proposal-slot" id="propSlot"></span>
+        </div>
 
-      <!-- Proposition UNIQUE — textes remplis depuis les constantes EVENT_* (JS) -->
-      <p class="section-label reveal" style="--d:400ms">Notre moment</p>
-      <div class="proposal reveal" style="--d:500ms">
-        <span class="proposal-name" id="propName"></span>
-        <span class="proposal-slot" id="propLieu"></span>
-        <span class="proposal-slot" id="propSlot"></span>
+        <div class="actions reveal2" id="actions" style="--d:240ms">
+          <button class="btn btn-yes" id="btnYes" type="button">Oui</button>
+          <button class="btn btn-no" id="btnNo" type="button">Non</button>
+        </div>
+        <!-- message taquin qui apparaît quand elle tente le "Non" -->
+        <p class="tease" id="tease" aria-live="polite"></p>
       </div>
-      <!-- ▲▲ FIN PLACEHOLDERS ▲▲ -->
-
-      <div class="actions reveal" id="actions" style="--d:600ms">
-        <button class="btn btn-yes" id="btnYes" type="button">Oui</button>
-        <button class="btn btn-no" id="btnNo" type="button">Non</button>
-      </div>
-      <!-- message taquin qui apparaît quand elle tente le "Non" -->
-      <p class="tease" id="tease" aria-live="polite"></p>
     </div>
 
     <!-- Confirmation (rempli dynamiquement) -->
@@ -612,6 +641,17 @@ qContinue.addEventListener('click', () => {
   // petit délai : laisse peindre l'état initial (.reveal) avant de lancer la cascade
   // (setTimeout plutôt que rAF : fiable même si l'onglet n'est pas au premier plan)
   setTimeout(()=> letterEl.classList.add('revealed'), 30);
+});
+
+/* ÉTAPE 1 → ÉTAPE 2 : le bouton "Suivant" dévoile "Notre moment" + Oui/Non */
+const btnNext = document.getElementById('btnNext');
+const step1El = document.getElementById('step1');
+const step2El = document.getElementById('step2');
+btnNext.addEventListener('click', () => {
+  step1El.classList.add('hidden');
+  step2El.classList.remove('hidden');
+  setTimeout(()=> step2El.classList.add('show'), 30);  // lance la cascade étape 2
+  document.getElementById('btnYes').focus();           // accessibilité clavier
 });
 
 /* ---- Musique de fond ---- */

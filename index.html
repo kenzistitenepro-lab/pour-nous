@@ -320,6 +320,46 @@ body{
 }
 .hidden{ display:none !important; }
 
+/* ============================================================
+   ÉCRAN QUESTION — surgit après l'ouverture, avant la lettre
+   ============================================================ */
+.question-overlay{
+  position:fixed; inset:0;
+  background:rgba(6,8,9,.92);
+  backdrop-filter:blur(4px);
+  display:flex; align-items:center; justify-content:center;
+  padding:32px 22px max(32px, env(safe-area-inset-bottom));
+  opacity:0; pointer-events:none;
+  transition:opacity .5s var(--ease);
+  z-index:25;                     /* au-dessus du fond, sous confetti(40) */
+}
+.question-overlay.is-visible{ opacity:1; pointer-events:auto; }
+
+.question-box{
+  max-width:520px; text-align:center;
+  transform:translateY(14px) scale(.98);
+  transition:transform .6s var(--ease);
+}
+.question-overlay.is-visible .question-box{ transform:none; }
+
+.question{
+  font-family:var(--font-display);
+  font-size:clamp(1.5rem, 6vw, 2.2rem);   /* grand, s'adapte mobile/desktop */
+  line-height:1.35;
+  color:var(--paper);
+  margin:0 0 30px;
+}
+.q-continue{
+  font:inherit; font-weight:600; font-size:1rem;
+  color:var(--paper);
+  background:var(--wax);
+  border:0; border-radius:999px;
+  padding:13px 30px; cursor:pointer;
+  box-shadow:0 8px 22px rgba(0,0,0,.35);
+  transition:transform .18s var(--ease), background .2s;
+}
+.q-continue:hover{ transform:translateY(-2px); }
+
 /* ---- Bouton "Ajouter au calendrier" (sobre, secondaire) ---- */
 .btn-cal{
   margin-top:18px;
@@ -394,6 +434,14 @@ body{
     </button>
   </div>
 </main>
+
+<!-- ============ ÉCRAN 1.5 : question (surgit après ouverture) ============ -->
+<div class="question-overlay" id="questionScreen" role="dialog" aria-modal="true" aria-label="Question">
+  <div class="question-box">
+    <p class="question" id="questionText"></p>
+    <button class="q-continue" id="qContinue" type="button">Ouvrir la lettre 💌</button>
+  </div>
+</div>
 
 <!-- ============ ÉCRAN 2 : lettre (overlay) ============ -->
 <div class="letter-overlay" id="letterOverlay" role="dialog" aria-modal="true" aria-label="Invitation">
@@ -474,6 +522,9 @@ body{
    ============================================================ */
 const CONFIRM_TITLE = "Alors c'est un oui 🥹"; // titre après "Oui" (éditable)
 
+// Question qui surgit APRÈS l'ouverture de l'enveloppe, AVANT la lettre (éditable).
+const QUESTION_TEXT = "Veux-tu être la dernière personne que je vais aimer… pour la vie ?";
+
 // Petits messages taquins affichés quand elle tente le "Non" (édite/ajoute librement).
 // Ils défilent dans l'ordre puis reviennent au début.
 const TEASE_MESSAGES = [
@@ -507,23 +558,35 @@ const envelope    = document.getElementById('envelope');
 const envScreen   = document.getElementById('envScreen');
 const overlay     = document.getElementById('letterOverlay');
 const letterEl    = document.querySelector('.letter');
+const questionScreen = document.getElementById('questionScreen');
+const qContinue      = document.getElementById('qContinue');
 
 // Remplit la proposition depuis les constantes EVENT_* (source unique)
 document.getElementById('propName').textContent = EVENT_TITLE;
 document.getElementById('propLieu').textContent = EVENT_LOCATION;
 document.getElementById('propSlot').textContent = EVENT_WHEN_TEXT;
+// Remplit la question
+document.getElementById('questionText').textContent = QUESTION_TEXT;
 
 function openEnvelope(){
   envelope.classList.add('is-open');
   startMusic();                          // le clic = geste utilisateur → autoplay autorisé
-  // laisse jouer l'anim du rabat, puis affiche la lettre + lance la cascade
+  // laisse jouer l'anim du rabat, puis affiche la QUESTION (pas encore la lettre)
   setTimeout(()=>{
-    overlay.classList.add('is-visible');
-    // rAF : garantit que l'état initial (.reveal) est peint avant d'animer
-    requestAnimationFrame(()=> letterEl.classList.add('revealed'));
+    questionScreen.classList.add('is-visible');
+    qContinue.focus();                   // accessibilité clavier
   }, 420);
 }
 envelope.addEventListener('click', openEnvelope);
+
+// La question → on ouvre la lettre + on lance la cascade
+qContinue.addEventListener('click', () => {
+  questionScreen.classList.remove('is-visible');
+  overlay.classList.add('is-visible');
+  // petit délai : laisse peindre l'état initial (.reveal) avant de lancer la cascade
+  // (setTimeout plutôt que rAF : fiable même si l'onglet n'est pas au premier plan)
+  setTimeout(()=> letterEl.classList.add('revealed'), 30);
+});
 
 /* ---- Musique de fond ---- */
 const music    = document.getElementById('music');

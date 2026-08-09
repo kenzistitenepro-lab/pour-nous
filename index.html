@@ -181,6 +181,51 @@ body{
   margin:0 0 22px;
 }
 
+/* ---- Portraits (elle + toi), ronds côte à côte ---- */
+.portraits{
+  display:flex; gap:18px; justify-content:center;
+  margin:2px 0 22px;
+}
+.portrait{ margin:0; text-align:center; }
+.portrait .avatar{
+  position:relative;
+  display:grid; place-items:center;
+  width:84px; height:84px; border-radius:50%;
+  overflow:hidden;
+  /* liseré double vert→bleu (palette) */
+  background:linear-gradient(140deg, var(--wax), var(--gold));
+  box-shadow:0 6px 16px rgba(0,0,0,.3);
+  /* fallback : initiale visible si la photo manque (img par-dessus) */
+  color:#fff; font-family:var(--font-display); font-size:1.9rem; font-weight:700;
+}
+.portrait .avatar::before{ content:attr(data-initial); }
+.portrait img{
+  position:absolute; inset:2px;         /* laisse voir le liseré */
+  width:calc(100% - 4px); height:calc(100% - 4px);
+  border-radius:50%; object-fit:cover;
+  background:var(--envelope);
+}
+.portrait figcaption{
+  margin-top:8px; font-size:.82rem; color:var(--muted); font-weight:600;
+}
+
+/* ---- Bouton musique (coin, toujours accessible) ---- */
+.music-btn{
+  position:fixed; top:14px; right:14px; z-index:30;
+  width:44px; height:44px; border-radius:50%;
+  border:1px solid rgba(62,123,250,.5);
+  background:rgba(15,23,28,.7);
+  backdrop-filter:blur(4px);
+  color:var(--paper);
+  font-size:1.1rem; cursor:pointer;
+  display:none;                          /* masqué tant que musique pas lancée */
+  place-items:center;
+  transition:transform .18s var(--ease), background .2s;
+}
+.music-btn.is-shown{ display:grid; }
+.music-btn:hover{ transform:scale(1.06); }
+.music-btn[aria-pressed="true"]{ color:var(--muted); }  /* état: coupé */
+
 .section-label{
   font-size:.72rem;
   letter-spacing:.16em;
@@ -336,6 +381,23 @@ body{
       <!-- ▼▼ PLACEHOLDERS — édite librement ▼▼ -->
       <h1 class="greeting">Bonjour [Prénom],</h1>
       <p class="sub">[Petite ligne d'intro / date]</p>
+
+      <!-- Portraits — si la photo manque, l'initiale (data-initial) s'affiche -->
+      <div class="portraits">
+        <figure class="portrait">
+          <span class="avatar" data-initial="E">
+            <img src="assets/photo-elle.jpg" alt="[Prénom]" onerror="this.remove()">
+          </span>
+          <figcaption>[Prénom]</figcaption>
+        </figure>
+        <figure class="portrait">
+          <span class="avatar" data-initial="T">
+            <img src="assets/photo-toi.jpg" alt="[Ton prénom]" onerror="this.remove()">
+          </span>
+          <figcaption>[Ton prénom]</figcaption>
+        </figure>
+      </div>
+
       <p class="message">
         [Ton message ici — quelques phrases douces. Remplace ce texte
         par ce que tu veux vraiment dire. Garde-le court et sincère.]
@@ -388,6 +450,11 @@ body{
   </article>
 </div>
 
+<!-- Musique de fond — fichier LOCAL, remplace assets/musique.mp3 -->
+<audio id="music" src="assets/musique.mp3" loop preload="auto"></audio>
+<button class="music-btn" id="musicBtn" type="button"
+        aria-pressed="false" aria-label="Couper la musique">♪</button>
+
 <canvas id="confetti"></canvas>
 
 <script>
@@ -406,10 +473,37 @@ const overlay     = document.getElementById('letterOverlay');
 
 function openEnvelope(){
   envelope.classList.add('is-open');
+  startMusic();                          // le clic = geste utilisateur → autoplay autorisé
   // laisse jouer l'anim du rabat, puis affiche la lettre
   setTimeout(()=> overlay.classList.add('is-visible'), 420);
 }
 envelope.addEventListener('click', openEnvelope);
+
+/* ---- Musique de fond ---- */
+const music    = document.getElementById('music');
+const musicBtn = document.getElementById('musicBtn');
+
+function startMusic(){
+  music.volume = 0.35;                   // volume doux
+  // .play() renvoie une promesse ; on ignore l'échec (fichier absent, etc.)
+  music.play().then(()=>{
+    musicBtn.classList.add('is-shown');  // affiche le bouton seulement si ça joue
+  }).catch(()=>{});
+}
+// Toggle pause/lecture ; aria-pressed=true => coupé
+musicBtn.addEventListener('click', () => {
+  if(music.paused){
+    music.play().catch(()=>{});
+    musicBtn.setAttribute('aria-pressed','false');
+    musicBtn.setAttribute('aria-label','Couper la musique');
+    musicBtn.textContent = '♪';
+  }else{
+    music.pause();
+    musicBtn.setAttribute('aria-pressed','true');
+    musicBtn.setAttribute('aria-label','Remettre la musique');
+    musicBtn.textContent = '✕';
+  }
+});
 
 /* ============================================================
    2. SÉLECTION DES CARTES (logique radio maison)

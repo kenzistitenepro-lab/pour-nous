@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Une invitation</title>
+<style>
+/* ============================================================
+   DESIGN SYSTEM — palette sombre élégante + accent chaud
+   ============================================================ */
+:root{
+  --ink:      #120D0B;   /* fond de page                     */
+  --envelope: #241C18;   /* corps de l'enveloppe             */
+  --envelope-flap:#2E241E;/* rabat (légèrement plus clair)   */
+  --wax:      #B24A3A;    /* cachet de cire / accent chaud    */
+  --wax-dark: #8E3729;    /* ombre du cachet                  */
+  --gold:     #C9A24B;    /* liseré doré + focus              */
+  --paper:    #F3E7D3;    /* parchemin (la lettre)            */
+  --paper-2:  #ECDFC7;    /* variation parchemin (dégradé)    */
+  --paper-ink:#2A211B;    /* texte sur parchemin              */
+  --muted:    #8A7A6C;    /* texte secondaire                 */
+
+  /* Typographies — polices SYSTÈME uniquement (offline OK) */
+  --font-display: Georgia, "Times New Roman", "Hoefler Text", serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --radius: 14px;
+  --ease: cubic-bezier(.22,.61,.36,1);
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; height:100%; }
+body{
+  font-family:var(--font-body);
+  color:var(--paper);
+  /* fond stylisé : dégradé radial chaud sur base sombre */
+  background:
+    radial-gradient(120% 80% at 50% -10%, #3a2a22 0%, transparent 55%),
+    radial-gradient(90% 70% at 50% 120%, #241713 0%, transparent 60%),
+    var(--ink);
+  min-height:100dvh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px 18px calc(24px + env(safe-area-inset-bottom));
+  overflow-x:hidden;
+}
+
+/* Focus clavier visible partout */
+:focus-visible{
+  outline:3px solid var(--gold);
+  outline-offset:3px;
+  border-radius:6px;
+}
+
+/* ============================================================
+   1. ENVELOPPE (élément signature)
+   ============================================================ */
+.stage{ width:100%; max-width:560px; }
+
+.envelope-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:22px;
+  text-align:center;
+}
+.hint{
+  color:var(--muted);
+  font-size:.85rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+/* Bouton-enveloppe (tout l'objet est cliquable/tappable) */
+.envelope{
+  position:relative;
+  width:min(78vw, 320px);
+  aspect-ratio:3 / 2;
+  border:0;
+  padding:0;
+  background:transparent;
+  cursor:pointer;
+  filter:drop-shadow(0 20px 40px rgba(0,0,0,.55));
+  transition:transform .25s var(--ease);
+}
+.envelope:hover{ transform:translateY(-4px); }
+.envelope:active{ transform:translateY(-1px) scale(.995); }
+
+/* corps */
+.env-body{
+  position:absolute; inset:0;
+  background:linear-gradient(160deg, var(--envelope) 0%, #1c1512 100%);
+  border-radius:10px;
+  box-shadow:inset 0 0 0 1px rgba(201,162,75,.18);
+  overflow:hidden;
+}
+/* plis latéraux (triangles en dégradé) */
+.env-body::before,
+.env-body::after{
+  content:""; position:absolute; top:0; bottom:0; width:52%;
+}
+.env-body::before{ left:0;  background:linear-gradient(120deg, rgba(255,255,255,.04), transparent 70%); clip-path:polygon(0 0,100% 50%,0 100%); }
+.env-body::after{  right:0; background:linear-gradient(240deg, rgba(0,0,0,.35), transparent 70%);   clip-path:polygon(100% 0,0 50%,100% 100%); }
+
+/* rabat supérieur (s'ouvre) */
+.env-flap{
+  position:absolute; left:0; right:0; top:0; height:56%;
+  background:linear-gradient(180deg, var(--envelope-flap), #201813);
+  clip-path:polygon(0 0,100% 0,50% 100%);
+  transform-origin:top center;
+  transition:transform .55s var(--ease), opacity .3s;
+  z-index:3;
+  box-shadow:0 2px 4px rgba(0,0,0,.3);
+}
+
+/* cachet de cire */
+.wax{
+  position:absolute; left:50%; top:50%;
+  width:74px; height:74px; margin:-37px 0 0 -37px;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, var(--wax) 0%, var(--wax-dark) 75%);
+  box-shadow:0 6px 14px rgba(0,0,0,.5), inset 0 0 0 3px rgba(0,0,0,.12);
+  display:grid; place-items:center;
+  z-index:4;
+  transition:transform .4s var(--ease), opacity .4s;
+}
+.wax::after{
+  content:"❤"; /* placeholder monogramme — remplace par une lettre/initiale */
+  font-size:1.5rem; color:rgba(255,240,225,.9);
+}
+
+/* état ouvert : rabat bascule vers le haut, cachet s'efface */
+.envelope.is-open .env-flap{ transform:rotateX(180deg); opacity:.9; }
+.envelope.is-open .wax{ transform:scale(.4); opacity:0; }
+
+/* ============================================================
+   2. LETTRE (overlay)
+   ============================================================ */
+.letter-overlay{
+  position:fixed; inset:0;
+  background:rgba(8,5,4,.72);
+  backdrop-filter:blur(3px);
+  display:flex; align-items:flex-start; justify-content:center;
+  padding:max(20px, env(safe-area-inset-top)) 16px 28px;
+  overflow-y:auto;
+  opacity:0; pointer-events:none;
+  transition:opacity .4s var(--ease);
+  z-index:20;
+}
+.letter-overlay.is-visible{ opacity:1; pointer-events:auto; }
+
+.letter{
+  position:relative;
+  width:100%; max-width:520px;
+  margin:auto;
+  background:linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  color:var(--paper-ink);
+  border-radius:var(--radius);
+  padding:30px 22px 26px;
+  box-shadow:0 30px 70px rgba(0,0,0,.55);
+  transform:translateY(18px) scale(.98);
+  transition:transform .45s var(--ease);
+  /* fine texture papier via liseré */
+  border:1px solid rgba(120,90,60,.18);
+}
+.letter-overlay.is-visible .letter{ transform:none; }
+
+.greeting{
+  font-family:var(--font-display);
+  font-size:1.6rem;
+  margin:0 0 4px;
+  color:var(--wax-dark);
+}
+.letter .sub{ margin:0 0 18px; color:var(--muted); font-size:.9rem; }
+
+.message{
+  font-family:var(--font-display);
+  font-size:1.05rem;
+  line-height:1.6;
+  margin:0 0 22px;
+}
+
+.section-label{
+  font-size:.72rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--wax-dark);
+  margin:0 0 12px;
+  font-weight:600;
+}
+
+/* ---- Cartes d'activités (radio-like) ---- */
+.cards{
+  display:grid;
+  grid-template-columns:1fr;   /* empilé sur mobile */
+  gap:12px;
+  margin-bottom:24px;
+}
+.card{
+  text-align:left;
+  border:2px solid rgba(120,90,60,.28);
+  background:rgba(255,255,255,.35);
+  border-radius:12px;
+  padding:14px 15px;
+  cursor:pointer;
+  font:inherit; color:inherit;
+  display:flex; align-items:center; gap:12px;
+  transition:border-color .2s var(--ease), background .2s var(--ease), transform .1s;
+}
+.card:active{ transform:scale(.99); }
+.card .radio{
+  flex:0 0 auto;
+  width:20px; height:20px; border-radius:50%;
+  border:2px solid var(--muted);
+  display:grid; place-items:center;
+  transition:border-color .2s;
+}
+.card .radio::after{
+  content:""; width:10px; height:10px; border-radius:50%;
+  background:var(--wax); transform:scale(0); transition:transform .2s var(--ease);
+}
+.card .body{ display:flex; flex-direction:column; gap:3px; }
+.card .name{ font-weight:600; font-size:1rem; }
+.card .slot{ font-size:.85rem; color:var(--muted); }
+
+/* état sélectionné — clair et net */
+.card[aria-checked="true"]{
+  border-color:var(--wax);
+  background:rgba(178,74,58,.12);
+}
+.card[aria-checked="true"] .radio{ border-color:var(--wax); }
+.card[aria-checked="true"] .radio::after{ transform:scale(1); }
+.card[aria-checked="true"] .name{ color:var(--wax-dark); }
+
+/* ---- Boutons ---- */
+.actions{
+  position:relative;      /* conteneur du bouton "Non" fuyard */
+  display:flex; gap:14px; align-items:center;
+  min-height:56px;        /* réserve l'espace même quand "Non" bouge */
+  flex-wrap:wrap;
+}
+.btn{
+  font:inherit; font-weight:600;
+  border-radius:999px;
+  padding:12px 26px;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:background .2s, color .2s, opacity .2s, transform .18s var(--ease);
+}
+/* Oui : désactivé tant qu'aucune carte n'est choisie */
+.btn-yes{
+  background:var(--wax);
+  color:#fff;
+  box-shadow:0 8px 20px rgba(178,74,58,.35);
+}
+.btn-yes[disabled]{
+  background:rgba(120,90,60,.25);
+  color:rgba(42,33,27,.45);
+  box-shadow:none;
+  cursor:not-allowed;
+}
+.btn-yes:not([disabled]):hover{ transform:translateY(-2px); }
+
+/* Non : positionné en absolu pour pouvoir "fuir" librement */
+.btn-no{
+  background:transparent;
+  color:var(--muted);
+  border-color:rgba(120,90,60,.4);
+  position:absolute;
+  /* position initiale (à droite de "Oui") — recalée en JS */
+  left:130px; top:50%;
+  transform:translateY(-50%);
+  transition:left .35s var(--ease), top .35s var(--ease),
+             transform .35s var(--ease), width .2s, height .2s, font-size .2s;
+  will-change:left, top;
+}
+
+/* ---- Écran de confirmation ---- */
+.confirm{ text-align:center; padding:12px 4px; }
+.confirm h2{
+  font-family:var(--font-display);
+  color:var(--wax-dark);
+  font-size:1.5rem;
+  margin:0 0 12px;
+}
+.confirm p{ line-height:1.6; margin:0 0 6px; }
+.confirm .pick{
+  font-weight:700; color:var(--wax-dark);
+}
+.hidden{ display:none !important; }
+
+/* Canvas confetti par-dessus tout */
+#confetti{
+  position:fixed; inset:0; pointer-events:none; z-index:40;
+}
+
+/* ============================================================
+   RESPONSIVE — desktop : cartes en grille si la place le permet
+   ============================================================ */
+@media (min-width:600px){
+  .letter{ padding:38px 34px 30px; }
+  .greeting{ font-size:1.9rem; }
+  .cards{ grid-template-columns:repeat(3, 1fr); }
+  .card{ flex-direction:column; align-items:flex-start; }
+}
+
+/* ============================================================
+   prefers-reduced-motion : coupe les transitions
+   ============================================================ */
+@media (prefers-reduced-motion:reduce){
+  *{ transition:none !important; animation:none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ ÉCRAN 1 : enveloppe ============ -->
+<main class="stage">
+  <div class="envelope-wrap" id="envScreen">
+    <p class="hint">Touche pour ouvrir</p>
+    <button class="envelope" id="envelope" aria-label="Ouvrir l'enveloppe">
+      <span class="env-body"></span>
+      <span class="env-flap"></span>
+      <span class="wax" aria-hidden="true"></span>
+    </button>
+  </div>
+</main>
+
+<!-- ============ ÉCRAN 2 : lettre (overlay) ============ -->
+<div class="letter-overlay" id="letterOverlay" role="dialog" aria-modal="true" aria-label="Invitation">
+  <article class="letter">
+
+    <!-- Contenu principal (masqué après validation) -->
+    <div id="letterMain">
+      <!-- ▼▼ PLACEHOLDERS — édite librement ▼▼ -->
+      <h1 class="greeting">Bonjour [Prénom],</h1>
+      <p class="sub">[Petite ligne d'intro / date]</p>
+      <p class="message">
+        [Ton message ici — quelques phrases douces. Remplace ce texte
+        par ce que tu veux vraiment dire. Garde-le court et sincère.]
+      </p>
+
+      <p class="section-label">Choisis notre moment</p>
+      <div class="cards" id="cards" role="radiogroup" aria-label="Choix d'activité">
+        <!-- data-name / data-slot = repris dans la confirmation -->
+        <button class="card" role="radio" aria-checked="false"
+                data-name="[Activité 1]" data-slot="[Jour • Heure]">
+          <span class="radio" aria-hidden="true"></span>
+          <span class="body">
+            <span class="name">[Activité 1]</span>
+            <span class="slot">[Jour • Heure]</span>
+          </span>
+        </button>
+        <button class="card" role="radio" aria-checked="false"
+                data-name="[Activité 2]" data-slot="[Jour • Heure]">
+          <span class="radio" aria-hidden="true"></span>
+          <span class="body">
+            <span class="name">[Activité 2]</span>
+            <span class="slot">[Jour • Heure]</span>
+          </span>
+        </button>
+        <button class="card" role="radio" aria-checked="false"
+                data-name="[Activité 3]" data-slot="[Jour • Heure]">
+          <span class="radio" aria-hidden="true"></span>
+          <span class="body">
+            <span class="name">[Activité 3]</span>
+            <span class="slot">[Jour • Heure]</span>
+          </span>
+        </button>
+      </div>
+      <!-- ▲▲ FIN PLACEHOLDERS ▲▲ -->
+
+      <div class="actions" id="actions">
+        <button class="btn btn-yes" id="btnYes" disabled aria-disabled="true">Oui</button>
+        <button class="btn btn-no" id="btnNo" type="button">Non</button>
+      </div>
+    </div>
+
+    <!-- Confirmation (rempli dynamiquement) -->
+    <div class="confirm hidden" id="confirm">
+      <h2>[Message de confirmation]</h2>
+      <p>On se voit pour <span class="pick" id="pickName">…</span></p>
+      <p><span class="pick" id="pickSlot">…</span></p>
+      <p class="sub" style="margin-top:14px">[Petit mot de fin ✨]</p>
+    </div>
+
+  </article>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<script>
+/* ============================================================
+   CONSTANTES ÉDITABLES
+   ============================================================ */
+const CONFIRM_TITLE = "[Message de confirmation]"; // titre après "Oui"
+// Le nom d'activité et le créneau sont lus depuis les data-* des cartes.
+
+/* ============================================================
+   1. OUVERTURE DE L'ENVELOPPE
+   ============================================================ */
+const envelope    = document.getElementById('envelope');
+const envScreen   = document.getElementById('envScreen');
+const overlay     = document.getElementById('letterOverlay');
+
+function openEnvelope(){
+  envelope.classList.add('is-open');
+  // laisse jouer l'anim du rabat, puis affiche la lettre
+  setTimeout(()=> overlay.classList.add('is-visible'), 420);
+}
+envelope.addEventListener('click', openEnvelope);
+
+/* ============================================================
+   2. SÉLECTION DES CARTES (logique radio maison)
+   - une seule carte active à la fois (aria-checked)
+   - active/désactive le bouton "Oui"
+   ============================================================ */
+const cards  = Array.from(document.querySelectorAll('.card'));
+const btnYes = document.getElementById('btnYes');
+let selectedCard = null;
+
+function selectCard(card){
+  // décoche toutes les cartes, coche celle cliquée
+  cards.forEach(c => c.setAttribute('aria-checked', c === card ? 'true' : 'false'));
+  selectedCard = card;
+  // "Oui" devient actionnable dès qu'un choix existe
+  btnYes.disabled = false;
+  btnYes.setAttribute('aria-disabled', 'false');
+}
+
+cards.forEach(card => {
+  card.addEventListener('click', () => selectCard(card));
+  // navigation clavier : Entrée / Espace sélectionnent
+  card.addEventListener('keydown', e => {
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); selectCard(card); }
+  });
+});
+
+/* ============================================================
+   3. BOUTON "NON" FUYARD
+   - au survol (desktop), au toucher (mobile) ou au clic : fuit
+   - se déplace dans son conteneur avec transition fluide
+   - rétrécit un peu à chaque tentative, reste dans l'écran
+   - ne valide JAMAIS
+   ============================================================ */
+const btnNo   = document.getElementById('btnNo');
+const actions = document.getElementById('actions');
+let noScale = 1;                      // facteur de rétrécissement cumulé
+const MIN_SCALE = 0.55;               // ne rétrécit pas à l'infini
+
+function fleeNo(){
+  // rétrécit légèrement (borné)
+  noScale = Math.max(MIN_SCALE, noScale - 0.07);
+
+  // dimensions courantes du conteneur et du bouton
+  const box = actions.getBoundingClientRect();
+  const w = btnNo.offsetWidth  * noScale;
+  const h = btnNo.offsetHeight * noScale;
+
+  // marge de sécurité pour rester visible dans le conteneur
+  const maxLeft = Math.max(0, box.width  - w);
+  const maxTop  = Math.max(0, box.height - h);
+
+  // nouvelle position aléatoire à l'intérieur des bornes
+  const left = Math.random() * maxLeft;
+  const top  = Math.random() * maxTop;
+
+  btnNo.style.left = left + 'px';
+  btnNo.style.top  = top + 'px';
+  btnNo.style.transform = `scale(${noScale})`; // translate retiré : left/top gèrent la position
+}
+
+// Desktop : fuit à l'approche du curseur + au clic
+btnNo.addEventListener('mouseenter', fleeNo);
+btnNo.addEventListener('click', e => { e.preventDefault(); fleeNo(); });
+// Mobile : fuit dès le touchstart (avant que le tap n'aboutisse)
+btnNo.addEventListener('touchstart', e => { e.preventDefault(); fleeNo(); }, {passive:false});
+// Clavier : si focus + Entrée/Espace, il fuit aussi
+btnNo.addEventListener('keydown', e => {
+  if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fleeNo(); }
+});
+
+/* ============================================================
+   4. BOUTON "OUI" → confetti + confirmation dynamique
+   ============================================================ */
+const letterMain = document.getElementById('letterMain');
+const confirm    = document.getElementById('confirm');
+
+btnYes.addEventListener('click', () => {
+  if(btnYes.disabled || !selectedCard) return;
+
+  // reprend le choix réel dans la confirmation
+  document.getElementById('pickName').textContent = selectedCard.dataset.name;
+  document.getElementById('pickSlot').textContent = selectedCard.dataset.slot;
+  confirm.querySelector('h2').textContent = CONFIRM_TITLE;
+
+  letterMain.classList.add('hidden');
+  confirm.classList.remove('hidden');
+
+  launchConfetti();
+});
+
+/* ============================================================
+   5. CONFETTI — canvas vanilla, zéro dépendance
+   ============================================================ */
+const canvas = document.getElementById('confetti');
+const ctx = canvas.getContext('2d');
+const reduceMotion = matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+function launchConfetti(){
+  if(reduceMotion) return;             // respecte la préférence
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  canvas.width  = innerWidth  * dpr;
+  canvas.height = innerHeight * dpr;
+  ctx.scale(dpr, dpr);
+
+  const colors = ['#B24A3A','#C9A24B','#F3E7D3','#8E3729','#E9C46A'];
+  const N = 140;
+  const parts = Array.from({length:N}, () => ({
+    x: innerWidth/2, y: innerHeight/3,
+    vx: (Math.random()-0.5) * 9,
+    vy: Math.random() * -11 - 4,
+    size: Math.random()*7 + 4,
+    color: colors[(Math.random()*colors.length)|0],
+    rot: Math.random()*Math.PI,
+    vr: (Math.random()-0.5)*0.3,
+    life: 1
+  }));
+
+  let frame = 0;
+  (function tick(){
+    ctx.clearRect(0,0,innerWidth,innerHeight);
+    frame++;
+    parts.forEach(p => {
+      p.vy += 0.28;          // gravité
+      p.x += p.vx; p.y += p.vy;
+      p.rot += p.vr;
+      p.life -= 0.006;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
+      ctx.restore();
+    });
+    if(frame < 220) requestAnimationFrame(tick);
+    else ctx.clearRect(0,0,innerWidth,innerHeight);
+  })();
+}
+</script>
+</body>
+</html>

@@ -727,17 +727,35 @@ const SCATTER_SLOTS = [
   { top:'84%', right:'5%',  rot:'-8deg' },
 ];
 
+// Sur mobile la carte prend toute la largeur : on garde les polaroïds
+// UNIQUEMENT en haut (0–28%) et en bas (70–96%), jamais derrière la carte.
+const MOBILE_SLOTS = [
+  { top:'1%',  left:'2%',   rot:'-8deg' },
+  { top:'3%',  left:'36%',  rot:'5deg'  },
+  { top:'1%',  right:'2%',  rot:'8deg'  },
+  { top:'15%', left:'16%',  rot:'6deg'  },
+  { top:'16%', right:'15%', rot:'-6deg' },
+  { top:'66%', left:'2%',   rot:'6deg'  },
+  { top:'67%', right:'2%',  rot:'-7deg' },
+  { top:'79%', left:'15%',  rot:'-5deg' },
+  { top:'80%', right:'15%', rot:'7deg'  },
+  { top:'81%', left:'37%',  rot:'-4deg' },
+];
+
 function buildScatter(){
   if(scatterBuilt || !SCATTER_PHOTOS.length) return;
   scatterBuilt = true;
-  SCATTER_SLOTS.forEach((slot, i) => {
+  const mobile = innerWidth < 640;                         // dispo dédiée mobile
+  const slots  = mobile ? MOBILE_SLOTS : SCATTER_SLOTS;
+  const w      = mobile ? 'clamp(52px, 18vw, 84px)' : 'clamp(58px, 16vw, 106px)';
+  slots.forEach((slot, i) => {
     const pola = document.createElement('div');
     pola.className = 'pola';
     pola.style.top = slot.top;
     if(slot.left)  pola.style.left  = slot.left;
     if(slot.right) pola.style.right = slot.right;
     pola.style.setProperty('--rot', slot.rot);
-    pola.style.setProperty('--w', 'clamp(58px, 16vw, 106px)');
+    pola.style.setProperty('--w', w);
     pola.style.setProperty('--d', (i * 90) + 'ms'); // apparition décalée
     const img = document.createElement('img');
     img.src = SCATTER_PHOTOS[i % SCATTER_PHOTOS.length]; // recycle si peu de photos

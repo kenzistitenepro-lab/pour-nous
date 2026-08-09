@@ -364,19 +364,6 @@ body{
 }
 .q-continue:hover{ transform:translateY(-2px); }
 
-/* ---- Bouton "Ajouter au calendrier" (sobre, secondaire) ---- */
-.btn-cal{
-  margin-top:18px;
-  font:inherit; font-weight:600; font-size:.85rem;
-  color:var(--paper-ink);
-  background:transparent;
-  border:1px solid var(--muted);
-  border-radius:999px;
-  padding:9px 18px; cursor:pointer;
-  transition:background .2s, color .2s, transform .18s var(--ease);
-}
-.btn-cal:hover{ background:var(--wax); color:var(--paper); border-color:var(--wax); transform:translateY(-1px); }
-
 /* ============================================================
    RÉVÉLATION EN CASCADE — chaque élément apparaît en fondu + translateY,
    décalé via --d (transition-delay). Déclenché par .letter.revealed
@@ -506,8 +493,6 @@ body{
       <p>On se voit pour <span class="pick" id="pickName">…</span></p>
       <p><span class="pick" id="pickSlot">…</span></p>
       <p class="sub" style="margin-top:14px">J'ai hâte…</p>
-      <!-- Génère + télécharge un .ics (date/heure depuis les constantes EVENT_*) -->
-      <button class="btn-cal" id="btnCal" type="button">📅 Ajouter au calendrier</button>
     </div>
 
   </article>
@@ -527,7 +512,7 @@ body{
 const CONFIRM_TITLE = "Alors c'est un oui 🥹"; // titre après "Oui" (éditable)
 
 // Question qui surgit APRÈS l'ouverture de l'enveloppe, AVANT la lettre (éditable).
-const QUESTION_TEXT = "Veux-tu être la dernière personne que je vais aimer… pour la vie ?";
+const QUESTION_TEXT = "Veux-tu être la dernière personne que je vais dater… pour la vie ?";
 
 // Petits messages taquins affichés quand elle tente le "Non" (édite/ajoute librement).
 // Ils défilent dans l'ordre puis reviennent au début.
@@ -546,14 +531,10 @@ const TEASE_MESSAGES = [
 const MUSIC_START = 0;    // début de lecture (s)
 const MUSIC_END   = 0;    // 0 = joue le morceau entier en boucle (pas d'extrait)
 
-// ▼ ÉVÉNEMENT — UN SEUL endroit à éditer : pilote l'affichage ET le fichier .ics.
-const EVENT_TITLE        = "Terrasse, vue sur la mer"; // activité (affichée + .ics)
-const EVENT_LOCATION     = "Lieu : secret 🤫";         // ligne lieu (affichée)
-const EVENT_WHEN_TEXT    = "12 août, vers 19h";        // créneau affiché (texte libre)
-const EVENT_DATE         = "2026-08-12";               // .ics — date AAAA-MM-JJ
-const EVENT_TIME         = "19:00";                    // .ics — heure HH:MM (locale)
-const EVENT_DURATION_MIN = 120;                        // .ics — durée en minutes
-const EVENT_ICS_LOCATION = "";                         // .ics — lieu (vide = secret)
+// ▼ ÉVÉNEMENT affiché dans la proposition + la confirmation (éditable ici).
+const EVENT_TITLE     = "Terrasse, vue sur la mer"; // activité
+const EVENT_LOCATION  = "Lieu : secret 🤫";         // ligne lieu
+const EVENT_WHEN_TEXT = "12 août, vers 19h";        // créneau (texte libre)
 
 /* ============================================================
    1. OUVERTURE DE L'ENVELOPPE
@@ -757,57 +738,7 @@ function launchConfetti(){
 }
 
 /* ============================================================
-   6. "AJOUTER AU CALENDRIER" — génère un .ics en JS pur (Blob)
-   Date/heure lues depuis les constantes EVENT_* (un seul endroit).
-   ============================================================ */
-const btnCal = document.getElementById('btnCal');
-
-const pad2 = n => String(n).padStart(2, '0');
-// échappe les caractères spéciaux ICS (RFC 5545)
-const icsEscape = s => String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;')
-                                .replace(/,/g,'\\,').replace(/\n/g,'\\n');
-// format "heure locale flottante" AAAAMMJJTHHMMSS (pas de fuseau : simple et suffisant)
-const icsLocal = dt => `${dt.getFullYear()}${pad2(dt.getMonth()+1)}${pad2(dt.getDate())}`+
-                       `T${pad2(dt.getHours())}${pad2(dt.getMinutes())}00`;
-// horodatage UTC pour DTSTAMP
-const icsStampUTC = dt => `${dt.getUTCFullYear()}${pad2(dt.getUTCMonth()+1)}${pad2(dt.getUTCDate())}`+
-                          `T${pad2(dt.getUTCHours())}${pad2(dt.getUTCMinutes())}${pad2(dt.getUTCSeconds())}Z`;
-
-function buildICS(){
-  const [y, mo, d] = EVENT_DATE.split('-').map(Number);
-  const [h, mi]    = EVENT_TIME.split(':').map(Number);
-  const start = new Date(y, mo - 1, d, h, mi);
-  const end   = new Date(start.getTime() + EVENT_DURATION_MIN * 60000);
-  const lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//pour-nous//invitation//FR',
-    'CALSCALE:GREGORIAN',
-    'BEGIN:VEVENT',
-    'UID:evt-' + start.getTime() + '@pour-nous',
-    'DTSTAMP:' + icsStampUTC(new Date()),
-    'DTSTART:' + icsLocal(start),
-    'DTEND:'   + icsLocal(end),
-    'SUMMARY:' + icsEscape(EVENT_TITLE),
-    EVENT_ICS_LOCATION ? 'LOCATION:' + icsEscape(EVENT_ICS_LOCATION) : '',
-    'DESCRIPTION:' + icsEscape('Notre moment ✨'),
-    'END:VEVENT',
-    'END:VCALENDAR'
-  ].filter(Boolean);
-  return lines.join('\r\n');   // ICS exige des retours CRLF
-}
-
-btnCal.addEventListener('click', () => {
-  const blob = new Blob([buildICS()], { type: 'text/calendar;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'invitation.ics';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-});
-
-/* ============================================================
-   7. PARTICULES DE FOND — poussière en suspension (avant ouverture)
+   6. PARTICULES DE FOND — poussière en suspension (avant ouverture)
    ~18 particules, dérive lente + continue, très faible opacité.
    Désactivé si prefers-reduced-motion.
    ============================================================ */

@@ -9,16 +9,16 @@
    DESIGN SYSTEM — palette sombre élégante + accent chaud
    ============================================================ */
 :root{
-  --ink:      #120D0B;   /* fond de page                     */
-  --envelope: #241C18;   /* corps de l'enveloppe             */
-  --envelope-flap:#2E241E;/* rabat (légèrement plus clair)   */
-  --wax:      #B24A3A;    /* cachet de cire / accent chaud    */
-  --wax-dark: #8E3729;    /* ombre du cachet                  */
-  --gold:     #C9A24B;    /* liseré doré + focus              */
-  --paper:    #F3E7D3;    /* parchemin (la lettre)            */
-  --paper-2:  #ECDFC7;    /* variation parchemin (dégradé)    */
-  --paper-ink:#2A211B;    /* texte sur parchemin              */
-  --muted:    #8A7A6C;    /* texte secondaire                 */
+  --ink:      #070B0E;   /* noir bleuté — fond de page        */
+  --envelope: #0F171C;   /* corps de l'enveloppe             */
+  --envelope-flap:#132128;/* rabat (légèrement plus clair)   */
+  --wax:      #2FBF71;    /* cachet — vert (accent primaire)  */
+  --wax-dark: #1C8C50;    /* ombre du cachet (vert foncé)     */
+  --gold:     #3E7BFA;    /* liseré + focus — bleu            */
+  --paper:    #ECF3F2;    /* papier clair légèrement froid    */
+  --paper-2:  #DCE8E6;    /* variation papier (dégradé)       */
+  --paper-ink:#0E1C1A;    /* texte sur papier                 */
+  --muted:    #7B8B90;    /* texte secondaire                 */
 
   /* Typographies — polices SYSTÈME uniquement (offline OK) */
   --font-display: Georgia, "Times New Roman", "Hoefler Text", serif;
@@ -35,8 +35,8 @@ body{
   color:var(--paper);
   /* fond stylisé : dégradé radial chaud sur base sombre */
   background:
-    radial-gradient(120% 80% at 50% -10%, #3a2a22 0%, transparent 55%),
-    radial-gradient(90% 70% at 50% 120%, #241713 0%, transparent 60%),
+    radial-gradient(120% 80% at 50% -10%, #123a2c 0%, transparent 55%),
+    radial-gradient(90% 70% at 50% 120%, #10243a 0%, transparent 60%),
     var(--ink);
   min-height:100dvh;
   display:flex;
@@ -227,7 +227,7 @@ body{
 /* état sélectionné — clair et net */
 .card[aria-checked="true"]{
   border-color:var(--wax);
-  background:rgba(178,74,58,.12);
+  background:rgba(47,191,113,.14);
 }
 .card[aria-checked="true"] .radio{ border-color:var(--wax); }
 .card[aria-checked="true"] .radio::after{ transform:scale(1); }
@@ -251,8 +251,8 @@ body{
 /* Oui : désactivé tant qu'aucune carte n'est choisie */
 .btn-yes{
   background:var(--wax);
-  color:#fff;
-  box-shadow:0 8px 20px rgba(178,74,58,.35);
+  color:#06210F;
+  box-shadow:0 8px 20px rgba(47,191,113,.32);
 }
 .btn-yes[disabled]{
   background:rgba(120,90,60,.25);
@@ -515,7 +515,7 @@ function launchConfetti(){
   canvas.height = innerHeight * dpr;
   ctx.scale(dpr, dpr);
 
-  const colors = ['#B24A3A','#C9A24B','#F3E7D3','#8E3729','#E9C46A'];
+  const colors = ['#2FBF71','#3E7BFA','#ECF3F2','#1C8C50','#5FA8FF'];
   const N = 140;
   const parts = Array.from({length:N}, () => ({
     x: innerWidth/2, y: innerHeight/3,

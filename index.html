@@ -489,9 +489,7 @@ body{
     <!-- Confirmation (rempli dynamiquement) -->
     <div class="confirm hidden" id="confirm">
       <h2>[Message de confirmation]</h2>
-      <p>C'est un rendez-vous ✨ <span class="pick" id="pickName">…</span></p>
-      <p><span class="pick" id="pickSlot">…</span></p>
-      <p class="sub" style="margin-top:14px">Prépare-toi, ça va être inoubliable 🌊</p>
+      <p style="margin-top:10px">Prépare-toi… je passe te prendre 🌊</p>
     </div>
 
   </article>
@@ -674,11 +672,6 @@ const letterMain = document.getElementById('letterMain');
 const confirm    = document.getElementById('confirm');
 
 btnYes.addEventListener('click', () => {
-  // reprend l'activité + le créneau de la proposition unique
-  document.getElementById('pickName').textContent =
-    document.getElementById('propName').textContent;
-  document.getElementById('pickSlot').textContent =
-    document.getElementById('propSlot').textContent;
   confirm.querySelector('h2').textContent = CONFIRM_TITLE;
 
   letterMain.classList.add('hidden');

@@ -322,6 +322,31 @@ body{
 .confirm .pick{
   font-weight:700; color:var(--wax-dark);
 }
+
+/* ---- Polaroïd souvenir (écran de confirmation) ---- */
+.polaroid{
+  display:inline-block;
+  background:#fff;
+  padding:8px 8px 24px;            /* bord bas plus large = style polaroïd */
+  border-radius:3px;
+  box-shadow:0 14px 32px rgba(0,0,0,.4);
+  transform:rotate(-4deg);         /* légèrement penché */
+  margin:0 auto 20px;
+  animation:polaroidIn .6s var(--ease) both;
+}
+.polaroid-photos{ display:flex; gap:5px; }
+.polaroid-photos img{
+  width:78px; height:92px; object-fit:cover; display:block; background:#e8e8e8;
+}
+.polaroid-cap{
+  display:block; margin-top:8px; text-align:center;
+  font-family:var(--font-display); font-size:.95rem; color:#3a3a3a;
+}
+@keyframes polaroidIn{
+  from{ opacity:0; transform:rotate(-11deg) scale(.9) translateY(10px); }
+  to{   opacity:1; transform:rotate(-4deg); }
+}
+
 .hidden{ display:none !important; }
 
 /* ============================================================
@@ -488,6 +513,14 @@ body{
 
     <!-- Confirmation (rempli dynamiquement) -->
     <div class="confirm hidden" id="confirm">
+      <!-- Polaroïd souvenir (toi + elle) -->
+      <div class="polaroid" aria-hidden="true">
+        <div class="polaroid-photos">
+          <img src="assets/photo%20yasmine.jpg" alt="">
+          <img src="assets/photo%20kenzi.jpg" alt="">
+        </div>
+        <span class="polaroid-cap">Nous ✨</span>
+      </div>
       <h2>[Message de confirmation]</h2>
       <p style="margin-top:10px">Prépare-toi… je passe te prendre 🌊</p>
     </div>
@@ -748,26 +781,30 @@ function launchConfetti(){
   resize();
   addEventListener('resize', resize);
 
-  const N = 18;                           // peu de particules = performant
+  const N = 28;                           // étoiles : peu = performant
   const parts = Array.from({length:N}, () => ({
     x: Math.random() * innerWidth,
     y: Math.random() * innerHeight,
-    r: Math.random() * 1.6 + 0.6,         // petit point fin
-    vx: (Math.random() - 0.5) * 0.14,     // dérive lente et aléatoire
-    vy: (Math.random() - 0.5) * 0.14,
-    a: Math.random() * 0.06 + 0.03        // opacité faible (0.03–0.09)
+    r: Math.random() * 1.6 + 0.6,         // taille variée (petites étoiles)
+    vx: (Math.random() - 0.5) * 0.12,     // dérive lente et aléatoire
+    vy: (Math.random() - 0.5) * 0.12,
+    base: Math.random() * 0.08 + 0.05,    // opacité de base (0.05–0.13)
+    tw: Math.random() * Math.PI * 2,      // phase du scintillement
+    tws: Math.random() * 0.03 + 0.01      // vitesse du scintillement
   }));
 
   (function drift(){
     bx.clearRect(0, 0, innerWidth, innerHeight);
     for(const p of parts){
       p.x += p.vx; p.y += p.vy;
+      p.tw += p.tws;                        // scintillement : opacité qui oscille
+      const a = p.base * (0.55 + 0.45 * Math.sin(p.tw));
       // ré-enroule doucement aux bords (dérive continue, jamais de saut visible)
       if(p.x < -5) p.x = innerWidth + 5;  else if(p.x > innerWidth + 5)  p.x = -5;
       if(p.y < -5) p.y = innerHeight + 5; else if(p.y > innerHeight + 5) p.y = -5;
       bx.beginPath();
       bx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      bx.fillStyle = `rgba(255,255,255,${p.a})`;
+      bx.fillStyle = `rgba(255,255,255,${a})`;
       bx.fill();
     }
     requestAnimationFrame(drift);

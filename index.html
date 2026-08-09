@@ -249,10 +249,12 @@ body{
 
 /* ---- Message taquin (tentatives de "Non") ---- */
 .tease{
-  min-height:1.2em;            /* réserve la place : pas de saut de layout */
-  margin:12px 2px 0;
-  font-size:.85rem; font-style:italic;
-  color:var(--muted);
+  min-height:1.5em;             /* réserve la place : pas de saut de layout */
+  margin:18px 0 0;
+  text-align:center;            /* centré — cohérent mobile ET desktop */
+  font-size:1rem; font-style:italic; font-weight:500;
+  line-height:1.4;
+  color:var(--wax-dark);        /* accent : bien lisible */
   opacity:0;                    /* vide au départ */
 }
 .tease.show{ animation:teasePop .45s var(--ease); opacity:1; }

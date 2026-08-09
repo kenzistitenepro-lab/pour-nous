@@ -125,13 +125,20 @@ body{
   border-radius:50%;
   background:radial-gradient(circle at 35% 30%, var(--wax) 0%, var(--wax-dark) 75%);
   box-shadow:0 6px 14px rgba(0,0,0,.5), inset 0 0 0 3px rgba(0,0,0,.12);
-  display:grid; place-items:center;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
   z-index:4;
   transition:transform .4s var(--ease), opacity .4s;
 }
+/* petit cœur ROUGE au-dessus */
+.wax::before{
+  content:"❤";
+  font-size:.95rem; line-height:1; color:#E23A2F;
+}
+/* initiale Y (monogramme) en dessous */
 .wax::after{
-  content:"❤"; /* placeholder monogramme — remplace par une lettre/initiale */
-  font-size:1.5rem; color:rgba(255,240,225,.9);
+  content:"Y";
+  font-family:var(--font-display); font-weight:700;
+  font-size:1.4rem; line-height:1.05; color:rgba(255,240,225,.95);
 }
 
 /* état ouvert : rabat bascule vers le haut, cachet s'efface */

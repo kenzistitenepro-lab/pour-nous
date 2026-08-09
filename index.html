@@ -9,16 +9,16 @@
    DESIGN SYSTEM — palette sombre élégante + accent chaud
    ============================================================ */
 :root{
-  --ink:      #070B0E;   /* noir bleuté — fond de page        */
-  --envelope: #0F171C;   /* corps de l'enveloppe             */
-  --envelope-flap:#132128;/* rabat (légèrement plus clair)   */
-  --wax:      #2FBF71;    /* cachet — vert (accent primaire)  */
-  --wax-dark: #1C8C50;    /* ombre du cachet (vert foncé)     */
-  --gold:     #3E7BFA;    /* liseré + focus — bleu            */
-  --paper:    #ECF3F2;    /* papier clair légèrement froid    */
-  --paper-2:  #DCE8E6;    /* variation papier (dégradé)       */
-  --paper-ink:#0E1C1A;    /* texte sur papier                 */
-  --muted:    #7B8B90;    /* texte secondaire                 */
+  --ink:      #0A0C0D;   /* noir profond mat — fond de page   */
+  --envelope: #16191B;   /* corps de l'enveloppe             */
+  --envelope-flap:#1C2022;/* rabat (légèrement plus clair)   */
+  --wax:      #3E8E6E;    /* accent unique — émeraude sobre   */
+  --wax-dark: #2A6650;    /* variante foncée de l'accent      */
+  --gold:     #4C7DF0;    /* bleu — RÉSERVÉ au focus clavier  */
+  --paper:    #F5F4F0;    /* papier ivoire mat                */
+  --paper-2:  #F5F4F0;    /* (aplat, plus de dégradé)         */
+  --paper-ink:#16191B;    /* texte sur papier                 */
+  --muted:    #8A9298;    /* texte secondaire                 */
 
   /* Typographies — polices SYSTÈME uniquement (offline OK) */
   --font-display: Georgia, "Times New Roman", "Hoefler Text", serif;
@@ -34,9 +34,9 @@ body{
   font-family:var(--font-body);
   color:var(--paper);
   /* fond stylisé : dégradé radial chaud sur base sombre */
+  /* léger halo NEUTRE pour la profondeur — aucune teinte colorée */
   background:
-    radial-gradient(120% 80% at 50% -10%, #123a2c 0%, transparent 55%),
-    radial-gradient(90% 70% at 50% 120%, #10243a 0%, transparent 60%),
+    radial-gradient(130% 90% at 50% 0%, #15181A 0%, transparent 60%),
     var(--ink);
   min-height:100dvh;
   display:flex;
@@ -192,9 +192,9 @@ body{
   display:grid; place-items:center;
   width:84px; height:84px; border-radius:50%;
   overflow:hidden;
-  /* liseré double vert→bleu (palette) */
-  background:linear-gradient(140deg, var(--wax), var(--gold));
-  box-shadow:0 6px 16px rgba(0,0,0,.3);
+  /* anneau fin uni (accent émeraude) — sobre */
+  background:var(--wax);
+  box-shadow:0 4px 14px rgba(0,0,0,.35);
   /* fallback : initiale visible si la photo manque (img par-dessus) */
   color:#fff; font-family:var(--font-display); font-size:1.9rem; font-weight:700;
 }
@@ -238,9 +238,9 @@ body{
 /* ---- Proposition unique (affichée, non sélectionnable) ---- */
 .proposal{
   display:flex; flex-direction:column; gap:4px;
-  border-left:3px solid var(--wax);      /* accent vert */
-  background:rgba(47,191,113,.10);
-  border-radius:10px;
+  border-left:2px solid var(--wax);      /* filet accent, sobre */
+  background:rgba(22,25,27,.04);
+  border-radius:8px;
   padding:14px 16px;
   margin-bottom:24px;
 }
@@ -300,8 +300,8 @@ body{
 /* Oui : désactivé tant qu'aucune carte n'est choisie */
 .btn-yes{
   background:var(--wax);
-  color:#06210F;
-  box-shadow:0 8px 20px rgba(47,191,113,.32);
+  color:#F5F4F0;
+  box-shadow:0 6px 16px rgba(0,0,0,.20);
 }
 .btn-yes[disabled]{
   background:rgba(120,90,60,.25);
@@ -461,6 +461,13 @@ const CONFIRM_TITLE = "[Message de confirmation]"; // titre après "Oui"
 //   Format international SANS le "+" ni espaces. Ex: France 06 12 34 56 78 → "33612345678".
 const WHATSAPP_NUMBER = "[NUMERO_PLACEHOLDER]";
 
+// ▼ Extrait de musique à jouer en boucle (en secondes).
+//   Ex: passage de 0:45 à 1:15 → START=45, END=75.
+//   Astuce: le plus léger est de couper directement le mp3 sur ce passage ;
+//   ces constantes servent si tu déposes le morceau entier.
+const MUSIC_START = 0;    // début de l'extrait (s)
+const MUSIC_END   = 30;   // fin de l'extrait (s) — reboucle ensuite (0 = joue tout)
+
 // L'activité et le créneau affichés dans la confirmation sont lus depuis la
 // proposition unique (#propName / #propSlot) — un seul endroit à éditer.
 
@@ -487,9 +494,14 @@ function startMusic(){
   music.volume = 0.35;                   // volume doux
   // .play() renvoie une promesse ; on ignore l'échec (fichier absent, etc.)
   music.play().then(()=>{
+    music.currentTime = MUSIC_START;     // démarre au début de l'extrait
     musicBtn.classList.add('is-shown');  // affiche le bouton seulement si ça joue
   }).catch(()=>{});
 }
+// Boucle l'extrait : quand on atteint MUSIC_END, on revient à MUSIC_START
+music.addEventListener('timeupdate', () => {
+  if(MUSIC_END > 0 && music.currentTime >= MUSIC_END) music.currentTime = MUSIC_START;
+});
 // Toggle pause/lecture ; aria-pressed=true => coupé
 musicBtn.addEventListener('click', () => {
   if(music.paused){
@@ -612,7 +624,7 @@ function launchConfetti(){
   canvas.height = innerHeight * dpr;
   ctx.scale(dpr, dpr);
 
-  const colors = ['#2FBF71','#3E7BFA','#ECF3F2','#1C8C50','#5FA8FF'];
+  const colors = ['#3E8E6E','#2A6650','#F5F4F0','#C9CDC9','#4C7DF0'];
   const N = 140;
   const parts = Array.from({length:N}, () => ({
     x: innerWidth/2, y: innerHeight/3,

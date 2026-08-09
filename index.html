@@ -247,41 +247,6 @@ body{
 .proposal-name{ font-weight:700; font-size:1.05rem; color:var(--wax-dark); }
 .proposal-slot{ font-size:.9rem; color:var(--muted); }
 
-/* ---- Option secondaire discrète (empêchement réel) ---- */
-.objection{ margin-top:18px; }
-.link-btn{
-  border:0; background:none; padding:4px 2px;
-  font:inherit; font-size:.82rem;
-  color:var(--muted);
-  text-decoration:underline; text-underline-offset:3px;
-  cursor:pointer;
-  opacity:.8; transition:opacity .2s, color .2s;
-}
-.link-btn:hover{ opacity:1; color:var(--paper-ink); }
-
-.obj-panel{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
-.obj-panel textarea{
-  font:inherit; font-size:.95rem;
-  color:var(--paper-ink);
-  background:rgba(255,255,255,.55);
-  border:1px solid rgba(14,28,26,.2);
-  border-radius:10px;
-  padding:10px 12px; resize:vertical; min-height:70px;
-}
-.obj-panel textarea:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
-/* "Envoyer" volontairement sobre — pas un CTA principal */
-.btn-send{
-  align-self:flex-start;
-  font:inherit; font-weight:600; font-size:.85rem;
-  color:var(--paper-ink);
-  background:transparent;
-  border:1px solid var(--muted);
-  border-radius:999px;
-  padding:8px 18px; cursor:pointer;
-  transition:background .2s, color .2s;
-}
-.btn-send:hover{ background:var(--paper-ink); color:var(--paper); }
-
 /* ---- Boutons ---- */
 .actions{
   position:relative;      /* conteneur du bouton "Non" fuyard */
@@ -419,18 +384,6 @@ body{
         <button class="btn btn-yes" id="btnYes" type="button">Oui</button>
         <button class="btn btn-no" id="btnNo" type="button">Non</button>
       </div>
-
-      <!-- Option secondaire DISCRÈTE : un empêchement réel, pas un refus -->
-      <div class="objection">
-        <button class="link-btn" id="objBtn" type="button" aria-expanded="false">
-          Ce créneau ne me va pas
-        </button>
-        <div class="obj-panel hidden" id="objPanel">
-          <textarea id="objText" rows="3"
-            placeholder="[Explique, ou propose un autre moment…]"></textarea>
-          <button class="btn-send" id="objSend" type="button">Envoyer</button>
-        </div>
-      </div>
     </div>
 
     <!-- Confirmation (rempli dynamiquement) -->
@@ -456,10 +409,6 @@ body{
    CONSTANTES ÉDITABLES
    ============================================================ */
 const CONFIRM_TITLE = "[Message de confirmation]"; // titre après "Oui"
-
-// ▼ Numéro WhatsApp qui reçoit le message de l'option "Ce créneau ne me va pas".
-//   Format international SANS le "+" ni espaces. Ex: France 06 12 34 56 78 → "33612345678".
-const WHATSAPP_NUMBER = "[NUMERO_PLACEHOLDER]";
 
 // ▼ Extrait de musique à jouer en boucle (en secondes).
 //   Ex: passage de 0:45 à 1:15 → START=45, END=75.
@@ -584,30 +533,6 @@ btnYes.addEventListener('click', () => {
   confirm.classList.remove('hidden');
 
   launchConfetti();
-});
-
-/* ============================================================
-   4b. OPTION DISCRÈTE "Ce créneau ne me va pas" → WhatsApp
-   - dévoile un textarea + "Envoyer"
-   - "Envoyer" ouvre WhatsApp avec le texte pré-rempli (wa.me)
-   - n'envoie rien tout seul : elle valide dans WhatsApp
-   ============================================================ */
-const objBtn   = document.getElementById('objBtn');
-const objPanel = document.getElementById('objPanel');
-const objText  = document.getElementById('objText');
-const objSend  = document.getElementById('objSend');
-
-objBtn.addEventListener('click', () => {
-  const open = objPanel.classList.toggle('hidden') === false;
-  objBtn.setAttribute('aria-expanded', String(open));
-  if(open) objText.focus();
-});
-
-objSend.addEventListener('click', () => {
-  const msg = objText.value.trim();
-  // encode le texte pour l'URL ; ouvre WhatsApp dans un nouvel onglet
-  const url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
-  window.open(url, '_blank');
 });
 
 /* ============================================================
